@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+/*
+ * Global base styles & CSS custom properties.
+ * Tailwind v4 auto-detects content sources via @tailwindcss/vite.
+ */
+
+/* ── Design tokens (extend in Tailwind v4 via @theme later) ── */
+:root {
+  --color-brand: #38bdf8;        /* sky-400 */
+  --color-surface: #0f172a;      /* slate-950 */
+  --color-surface-alt: #1e293b;  /* slate-800 */
+
+  /* Safe-area insets for notched devices */
+  --sat: env(safe-area-inset-top);
+  --sab: env(safe-area-inset-bottom);
+  --sal: env(safe-area-inset-left);
+  --sar: env(safe-area-inset-right);
+}
+
+/* Ensure the app fills the viewport on mobile */
+html, body, #root {
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+/* Smooth scrolling, respecting user preference */
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
