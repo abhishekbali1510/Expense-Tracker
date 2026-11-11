@@ -1,11 +1,9 @@
 import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import {
-  INITIAL_MONTHLY_BASE,
   DEFAULT_ACTIVE_MONTH,
-  AVAILABLE_MONTHS,
-  INITIAL_BANKS,
-  INITIAL_SECTIONS,
-  INITIAL_P2P_SUMMARY,
+  INITIAL_MONTHS_CONFIG,
+  INITIAL_PEOPLE,
+  BUCKET_DEFINITIONS,
   INITIAL_TRANSACTIONS,
 } from '../config/budgetConfig';
 import { LS_KEYS } from '../config/constants';
@@ -14,26 +12,21 @@ import { syncExpenseToSheet, deleteExpenseFromSheet } from '../services/gasApi';
 export const AppContext = createContext(null);
 
 export function AppProvider({ children }) {
-  // ── Active Month & Base ──
+  // ── Months Configurations (dynamic per month) ──
+  const [monthsConfig, setMonthsConfig] = useState(() => {
+    const saved = localStorage.getItem(LS_KEYS.MONTHS_CONFIG);
+    return saved ? JSON.parse(saved) : INITIAL_MONTHS_CONFIG;
+  });
+
+  // ── Active Month ──
   const [activeMonth, setActiveMonthState] = useState(() => {
     return localStorage.getItem(LS_KEYS.ACTIVE_MONTH) || DEFAULT_ACTIVE_MONTH;
   });
 
-  const [monthlyBase] = useState(() => {
-    const saved = localStorage.getItem(LS_KEYS.MONTHLY_BASE);
-    return saved ? Number(saved) : INITIAL_MONTHLY_BASE;
-  });
-
-  // ── Bank Accounts (Strictly HDFC & SBI) ──
-  const [banks, setBanks] = useState(() => {
-    const saved = localStorage.getItem(LS_KEYS.BANKS);
-    return saved ? JSON.parse(saved) : INITIAL_BANKS;
-  });
-
-  // ── Budget Sections Configuration ──
-  const [sections, setSections] = useState(() => {
-    const saved = localStorage.getItem(LS_KEYS.SECTIONS);
-    return saved ? JSON.parse(saved) : INITIAL_SECTIONS;
+  // ── P2P People List ──
+  const [people, setPeople] = useState(() => {
+    const saved = localStorage.getItem(LS_KEYS.PEOPLE);
+    return saved ? JSON.parse(saved) : INITIAL_PEOPLE;
   });
 
   // ── Transactions Ledger ──
@@ -42,39 +35,64 @@ export function AppProvider({ children }) {
     return saved ? JSON.parse(saved) : INITIAL_TRANSACTIONS;
   });
 
-  // ── P2P Summary Baseline ──
-  const [p2pSummary, setP2pSummary] = useState(() => {
-    const saved = localStorage.getItem(LS_KEYS.P2P_SUMMARY);
-    return saved ? JSON.parse(saved) : INITIAL_P2P_SUMMARY;
-  });
-
-  // ── Add/Edit Modal State ──
+  // ── Modal States ──
   const [modalState, setModalState] = useState({
     isOpen: false,
     mode: 'add', // 'add' | 'edit'
     defaultSection: 'essentials',
+    defaultPerson: 'Vivek',
     editingExpense: null,
   });
 
-  // ── Sync Status Indicator ──
+  const [isMonthConfigModalOpen, setIsMonthConfigModalOpen] = useState(false);
+  const [activePersonLedger, setActivePersonLedger] = useState(null); // string (person name) or null
+
+  // ── Sync Status ──
   const [syncStatus, setSyncStatus] = useState('idle'); // 'idle' | 'syncing' | 'synced' | 'error'
 
-  // Persist transactions
+  // Persist State
   useEffect(() => {
-    localStorage.setItem(LS_KEYS.TRANSACTIONS, JSON.stringify(transactions));
-  }, [transactions]);
+    localStorage.setItem(LS_KEYS.MONTHS_CONFIG, JSON.stringify(monthsConfig));
+  }, [monthsConfig]);
 
-  // Persist active month
   useEffect(() => {
     localStorage.setItem(LS_KEYS.ACTIVE_MONTH, activeMonth);
   }, [activeMonth]);
 
-  // Persist banks
   useEffect(() => {
-    localStorage.setItem(LS_KEYS.BANKS, JSON.stringify(banks));
-  }, [banks]);
+    localStorage.setItem(LS_KEYS.PEOPLE, JSON.stringify(people));
+  }, [people]);
 
-  // ── Filter transactions by active month ──
+  useEffect(() => {
+    localStorage.setItem(LS_KEYS.TRANSACTIONS, JSON.stringify(transactions));
+  }, [transactions]);
+
+  // Current Month Data
+  const currentMonthData = useMemo(() => {
+    if (monthsConfig[activeMonth]) {
+      return monthsConfig[activeMonth];
+    }
+    // Fallback if month is missing
+    return (
+      INITIAL_MONTHS_CONFIG[activeMonth] || {
+        name: activeMonth,
+        monthlyBase: 142900,
+        percentages: { essentials: 50, savings: 30, wants: 10, invest: 10 },
+        prevCarries: { essentials: 0, savings: 0, wants: 0, invest: 0 },
+        banks: {
+          HDFC: { name: 'HDFC Bank', subtitle: 'Primary & Invest', balance: 0, prevCarry: 0 },
+          SBI: { name: 'SBI Bank', subtitle: 'Daily UPI & Stocks', balance: 0, prevCarry: 0 },
+        },
+      }
+    );
+  }, [monthsConfig, activeMonth]);
+
+  // Available Months List
+  const availableMonths = useMemo(() => {
+    return Object.keys(monthsConfig);
+  }, [monthsConfig]);
+
+  // Current Month Transactions
   const currentMonthTransactions = useMemo(() => {
     return transactions.filter(
       (tx) => !tx.month || tx.month.toLowerCase() === activeMonth.toLowerCase()
@@ -85,20 +103,38 @@ export function AppProvider({ children }) {
   // Formula: Remaining = Allocated + Prev/Carry - Total Spent in Section
   const sectionMetrics = useMemo(() => {
     const metrics = {};
+    const base = currentMonthData.monthlyBase || 0;
+    const percentages = currentMonthData.percentages || {
+      essentials: 50,
+      savings: 30,
+      wants: 10,
+      invest: 10,
+    };
+    const prevCarries = currentMonthData.prevCarries || {
+      essentials: 0,
+      savings: 0,
+      wants: 0,
+      invest: 0,
+    };
 
-    sections.forEach((sec) => {
-      const secKey = sec.key.toLowerCase();
+    BUCKET_DEFINITIONS.forEach((def) => {
+      const key = def.key;
+      const percent = percentages[key] ?? 25;
+      const allocated = Math.round((base * percent) / 100);
+      const prevCarry = prevCarries[key] ?? 0;
+
       const secTransactions = currentMonthTransactions.filter(
-        (tx) => tx.section && tx.section.toLowerCase() === secKey
+        (tx) => tx.section && tx.section.toLowerCase() === key
       );
 
       const spent = secTransactions.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
-      const allocated = sec.allocated || 0;
-      const prevCarry = sec.prevCarry || 0;
       const remaining = allocated + prevCarry - spent;
 
-      metrics[secKey] = {
-        ...sec,
+      metrics[key] = {
+        ...def,
+        percent,
+        allocated,
+        prevCarry,
         spent,
         remaining,
         transactions: secTransactions,
@@ -106,48 +142,99 @@ export function AppProvider({ children }) {
     });
 
     return metrics;
-  }, [sections, currentMonthTransactions]);
+  }, [currentMonthData, currentMonthTransactions]);
 
-  // ── Calculate P2P Metrics ──
-  const p2pMetrics = useMemo(() => {
+  // ── Calculate People Metrics for P2P ──
+  const peopleMetrics = useMemo(() => {
     const p2pTx = currentMonthTransactions.filter(
       (tx) => tx.section && tx.section.toLowerCase() === 'p2p'
     );
 
-    // Dynamic calculations for Vivek & Mummy / Home
-    const vivekInflow = p2pTx
-      .filter((tx) => tx.person?.toLowerCase().includes('vivek') && tx.flow === 'in')
-      .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+    const metrics = {};
 
-    const vivekOutflow = p2pTx
-      .filter((tx) => tx.person?.toLowerCase().includes('vivek') && tx.flow === 'out')
-      .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+    people.forEach((personName) => {
+      const pTx = p2pTx.filter(
+        (tx) => tx.person && tx.person.toLowerCase() === personName.toLowerCase()
+      );
 
-    const mummyTotal = p2pTx
-      .filter((tx) => tx.person?.toLowerCase().includes('mummy'))
-      .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+      const inflow = pTx
+        .filter((tx) => tx.flow === 'in')
+        .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
 
-    return {
-      transactions: p2pTx,
-      vivekNetPool: p2pSummary.vivekPool.netBalance,
-      vivekPoolIn: p2pSummary.vivekPool.breakdownPositive,
-      vivekPoolOut: p2pSummary.vivekPool.breakdownNegative,
-      thisMonthVivekIn: vivekInflow > 0 ? vivekInflow : p2pSummary.vivekMonth.inflow,
-      thisMonthVivekOut: vivekOutflow > 0 ? -Math.abs(vivekOutflow) : p2pSummary.vivekMonth.outflow,
-      thisMonthVivekNet:
-        (vivekInflow > 0 || vivekOutflow > 0)
-          ? (vivekInflow - vivekOutflow)
-          : p2pSummary.vivekMonth.netPosition,
-      mummyTotal: mummyTotal > 0 ? mummyTotal : p2pSummary.mummyHome.totalTransfer,
-    };
-  }, [currentMonthTransactions, p2pSummary]);
+      const outflow = pTx
+        .filter((tx) => tx.flow === 'out')
+        .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+
+      const net = inflow - outflow;
+
+      metrics[personName] = {
+        name: personName,
+        transactions: pTx,
+        inflow,
+        outflow,
+        net,
+        count: pTx.length,
+      };
+    });
+
+    return metrics;
+  }, [people, currentMonthTransactions]);
+
+  // ── P2P Person Management ──
+  const addPerson = useCallback((name) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setPeople((prev) => {
+      if (prev.some((p) => p.toLowerCase() === trimmed.toLowerCase())) return prev;
+      return [...prev, trimmed];
+    });
+  }, []);
+
+  // ── Month Management ──
+  const addMonth = useCallback(
+    ({ monthName, monthlyBase, percentages, prevCarries, banks }) => {
+      const trimmed = monthName.trim();
+      if (!trimmed) return;
+
+      setMonthsConfig((prev) => ({
+        ...prev,
+        [trimmed]: {
+          name: trimmed,
+          monthlyBase: Number(monthlyBase) || 140000,
+          percentages: percentages || { essentials: 50, savings: 30, wants: 10, invest: 10 },
+          prevCarries: prevCarries || { essentials: 0, savings: 0, wants: 0, invest: 0 },
+          banks: banks || {
+            HDFC: { name: 'HDFC Bank', subtitle: 'Primary & Invest', balance: 0, prevCarry: 0 },
+            SBI: { name: 'SBI Bank', subtitle: 'Daily UPI & Stocks', balance: 0, prevCarry: 0 },
+          },
+        },
+      }));
+      setActiveMonthState(trimmed);
+      setIsMonthConfigModalOpen(false);
+    },
+    []
+  );
+
+  const updateCurrentMonthConfig = useCallback(
+    (updatedFields) => {
+      setMonthsConfig((prev) => ({
+        ...prev,
+        [activeMonth]: {
+          ...prev[activeMonth],
+          ...updatedFields,
+        },
+      }));
+    },
+    [activeMonth]
+  );
 
   // ── Modal Actions ──
-  const openAddModal = useCallback((section = 'essentials') => {
+  const openAddModal = useCallback((section = 'essentials', person = '') => {
     setModalState({
       isOpen: true,
       mode: 'add',
       defaultSection: section.toLowerCase(),
+      defaultPerson: person || 'Vivek',
       editingExpense: null,
     });
   }, []);
@@ -157,6 +244,7 @@ export function AppProvider({ children }) {
       isOpen: true,
       mode: 'edit',
       defaultSection: expense.section?.toLowerCase() || 'essentials',
+      defaultPerson: expense.person || 'Vivek',
       editingExpense: expense,
     });
   }, []);
@@ -169,13 +257,18 @@ export function AppProvider({ children }) {
     }));
   }, []);
 
-  // ── Save (Create or Update) Expense ──
+  // ── Save Expense (Optimistic + GAS Sync) ──
   const saveExpense = useCallback(
     async (expenseData) => {
       setSyncStatus('syncing');
 
       let savedRecord = null;
       let isEdit = false;
+
+      // If person is new, add them
+      if (expenseData.person) {
+        addPerson(expenseData.person);
+      }
 
       setTransactions((prev) => {
         if (modalState.mode === 'edit' && modalState.editingExpense) {
@@ -220,7 +313,7 @@ export function AppProvider({ children }) {
         setTimeout(() => setSyncStatus('idle'), 4000);
       }
     },
-    [activeMonth, modalState, closeModal]
+    [activeMonth, modalState, closeModal, addPerson]
   );
 
   // ── Delete Expense ──
@@ -251,16 +344,23 @@ export function AppProvider({ children }) {
   const value = {
     activeMonth,
     setActiveMonth: setActiveMonthState,
-    availableMonths: AVAILABLE_MONTHS,
-    monthlyBase,
-    banks,
-    sections,
+    availableMonths,
+    monthsConfig,
+    currentMonthData,
+    banks: currentMonthData.banks,
+    people,
+    addPerson,
+    addMonth,
+    updateCurrentMonthConfig,
     transactions: currentMonthTransactions,
-    allTransactions: transactions,
     sectionMetrics,
-    p2pMetrics,
+    peopleMetrics,
     modalState,
     syncStatus,
+    isMonthConfigModalOpen,
+    setIsMonthConfigModalOpen,
+    activePersonLedger,
+    setActivePersonLedger,
     openAddModal,
     openEditModal,
     closeModal,

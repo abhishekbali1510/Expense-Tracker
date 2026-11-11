@@ -33,10 +33,8 @@ export const EXPENSE_SECTIONS = [
 /** LocalStorage keys */
 export const LS_KEYS = {
   TRANSACTIONS: 'et_transactions',
-  BANKS: 'et_banks',
-  SECTIONS: 'et_sections',
+  MONTHS_CONFIG: 'et_months_config',
   ACTIVE_MONTH: 'et_active_month',
-  MONTHLY_BASE: 'et_monthly_base',
-  P2P_SUMMARY: 'et_p2p_summary',
+  PEOPLE: 'et_people',
   GAS_URL_OVERRIDE: 'et_gas_url',
 };

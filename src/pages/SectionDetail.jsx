@@ -20,7 +20,7 @@ export default function SectionDetail() {
   const hasPrevCarry = section.prevCarry !== 0;
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 py-4">
+    <div className="w-full max-w-7xl mx-auto space-y-3.5 md:space-y-6 py-1 md:py-3 pb-8">
       {/* ─────────────────────────────────────────────────────────────
           TOP NAVIGATION ROW: Back to Home + Quick Section Switcher Pills
           ───────────────────────────────────────────────────────────── */}
@@ -58,44 +58,44 @@ export default function SectionDetail() {
       {/* ─────────────────────────────────────────────────────────────
           SECTION SUMMARY HEADER CARD (4-Column Metric Bar)
           ───────────────────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900/95 to-slate-950 p-6 shadow-xl">
+      <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900/95 to-slate-950 p-4 shadow-xl">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight text-white">{section.label}</h1>
-              <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${section.badgeClass}`}>
+              <h1 className="text-xl font-bold tracking-tight text-white">{section.label}</h1>
+              <span className={`rounded-full border px-2 py-0.2 text-[10px] font-semibold ${section.badgeClass}`}>
                 {section.percent}% Framework
               </span>
             </div>
-            <p className="mt-1 text-xs text-slate-400">
-              Detailed transaction ledger for {section.label} bucket
+            <p className="mt-0.5 text-[11px] text-slate-400">
+              Detailed ledger for {section.label} bucket
             </p>
           </div>
 
           <button
             onClick={() => openAddModal(currentKey)}
-            className="flex items-center gap-1.5 rounded-xl bg-sky-500 px-4 py-2 text-xs font-semibold text-slate-950 shadow-md shadow-sky-500/20 transition hover:bg-sky-400 active:scale-95"
+            className="flex items-center gap-1 rounded-xl bg-sky-500 px-3 py-1.5 text-xs font-semibold text-slate-950 shadow-md shadow-sky-500/20 transition hover:bg-sky-400 active:scale-95"
           >
             <span className="font-bold">+</span>
-            <span>Add to this section</span>
+            <span>Add Entry</span>
           </button>
         </div>
 
         {/* 4-Column Metric Bar: Allocated | Carry Forward | Spent | Remaining */}
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="mt-4 grid grid-cols-4 gap-2">
           {/* Allocated */}
-          <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3.5 text-center">
-            <div className="text-xs font-medium text-slate-400">Allocated</div>
-            <div className="mt-1 text-base font-bold text-white sm:text-lg">
+          <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-2 text-center">
+            <div className="text-[10px] font-medium text-slate-400">Allocated</div>
+            <div className="mt-0.5 text-xs font-bold text-white">
               {formatCurrency(section.allocated)}
             </div>
           </div>
 
           {/* Carry Forward */}
-          <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3.5 text-center">
-            <div className="text-xs font-medium text-slate-400">Carry Forward</div>
+          <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-2 text-center">
+            <div className="text-[10px] font-medium text-slate-400">Carry</div>
             <div
-              className={`mt-1 text-base font-bold sm:text-lg ${
+              className={`mt-0.5 text-xs font-bold ${
                 section.prevCarry < 0 ? 'text-rose-400' : 'text-slate-200'
               }`}
             >
@@ -104,18 +104,18 @@ export default function SectionDetail() {
           </div>
 
           {/* Spent */}
-          <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3.5 text-center">
-            <div className="text-xs font-medium text-slate-400">Total Spent</div>
-            <div className="mt-1 text-base font-bold text-amber-300 sm:text-lg">
+          <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-2 text-center">
+            <div className="text-[10px] font-medium text-slate-400">Spent</div>
+            <div className="mt-0.5 text-xs font-bold text-amber-300">
               {formatCurrency(section.spent)}
             </div>
           </div>
 
           {/* Remaining */}
-          <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3.5 text-center">
-            <div className="text-xs font-medium text-slate-400">Remaining</div>
+          <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-2 text-center">
+            <div className="text-[10px] font-medium text-slate-400">Remaining</div>
             <div
-              className={`mt-1 text-base font-black sm:text-lg ${
+              className={`mt-0.5 text-xs font-black ${
                 section.remaining < 0 ? 'text-rose-400' : 'text-sky-300'
               }`}
             >
