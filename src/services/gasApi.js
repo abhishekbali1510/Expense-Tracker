@@ -1,40 +1,131 @@
 /**
- * Google Apps Script API service.
+ * Google Apps Script Web App API Service
  *
- * All communication with the Google Sheets backend flows through this module.
- * It wraps fetch calls to the deployed GAS Web App URL.
- *
- * The actual endpoint methods (addExpense, getExpenses, etc.) will be
- * implemented once the API contract is finalised.
+ * Communicates with the serverless Google Sheets backend using clean REST/JSON
+ * payloads formatted for the human-readable ledger columns:
+ * Row ID | Date | Section | Description | Bank Account | Amount
  */
 
-const GAS_URL = import.meta.env.VITE_GAS_WEBAPP_URL;
+const GAS_URL = import.meta.env.VITE_GAS_WEBAPP_URL || '';
 
 /**
- * Generic POST helper for the GAS webhook.
- * @param {string} action  - The action identifier understood by the GAS doPost handler.
- * @param {object} payload - JSON-serialisable data to send.
- * @returns {Promise<object>}
+ * Format a transaction row into the standardized Google Sheet ledger structure.
+ *
+ * @param {object} item
+ * @returns {object} Standardized row payload
  */
-export async function postToGAS(action, payload = {}) {
-  const res = await fetch(GAS_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' }, // GAS quirk: text/plain avoids CORS preflight
-    body: JSON.stringify({ action, ...payload }),
-  });
-  if (!res.ok) throw new Error(`GAS request failed: ${res.status}`);
-  return res.json();
+export function formatRowForSheet(item) {
+  return {
+    rowId: item.id || `row_${Date.now()}`,
+    date: item.date || '',
+    section: item.section || 'Essentials',
+    description: item.description || '',
+    bankAccount: item.bankAccount || 'SBI',
+    amount: Number(item.amount) || 0,
+    flow: item.flow || 'out', // 'in' or 'out' for P2P
+  };
 }
 
 /**
- * Generic GET helper (query-string params forwarded to GAS doGet).
- * @param {Record<string, string>} params
- * @returns {Promise<object>}
+ * Execute a POST request against the Google Apps Script Web App.
+ * Uses Content-Type: text/plain;charset=utf-8 and redirect: "follow" for GAS compatibility.
+ *
+ * @param {string} action - 'addExpense' | 'updateExpense' | 'deleteExpense' | 'syncAll'
+ * @param {object} payload - Action-specific payload
+ * @returns {Promise<{success: boolean, message?: string, data?: any}>}
  */
-export async function getFromGAS(params = {}) {
-  const url = new URL(GAS_URL);
-  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
-  const res = await fetch(url.toString());
-  if (!res.ok) throw new Error(`GAS request failed: ${res.status}`);
-  return res.json();
+export async function postToGAS(action, payload = {}) {
+  if (!GAS_URL || GAS_URL.includes('YOUR_DEPLOYMENT_ID')) {
+    console.info(`[GAS Offline Mode] Action: ${action}`, payload);
+    return {
+      success: true,
+      offline: true,
+      message: 'Saved locally. Google Apps Script Web App URL not configured yet.',
+    };
+  }
+
+  try {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      redirect: 'follow',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify({
+        action,
+        timestamp: new Date().toISOString(),
+        ...payload,
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP Error from GAS: ${res.status} ${res.statusText}`);
+    }
+
+    const data = await res.json();
+    return { success: true, ...data };
+  } catch (err) {
+    console.warn(`[GAS Sync Warning] Failed to reach Google Sheets (${action}):`, err);
+    return {
+      success: false,
+      offline: true,
+      error: err.message,
+    };
+  }
+}
+
+/**
+ * Sync an individual expense row to the active monthly sheet tab (e.g., "Nov-2026").
+ *
+ * @param {string} tabName - Target sheet tab name (e.g. "Nov-2026")
+ * @param {object} expense - Transaction item
+ * @param {string} [mode='add'] - 'add' or 'update'
+ */
+export async function syncExpenseToSheet(tabName, expense, mode = 'add') {
+  const rowData = formatRowForSheet(expense);
+  return postToGAS(mode === 'edit' ? 'updateExpense' : 'addExpense', {
+    sheetName: tabName,
+    row: rowData,
+  });
+}
+
+/**
+ * Remove an expense row from the active sheet tab by its Row ID.
+ *
+ * @param {string} tabName
+ * @param {string} rowId
+ */
+export async function deleteExpenseFromSheet(tabName, rowId) {
+  return postToGAS('deleteExpense', {
+    sheetName: tabName,
+    rowId,
+  });
+}
+
+/**
+ * Fetch monthly transactions from the Google Sheet Web App (doGet).
+ *
+ * @param {string} tabName
+ */
+export async function fetchSheetExpenses(tabName) {
+  if (!GAS_URL || GAS_URL.includes('YOUR_DEPLOYMENT_ID')) {
+    return { success: true, offline: true, rows: [] };
+  }
+
+  try {
+    const url = new URL(GAS_URL);
+    url.searchParams.set('action', 'getExpenses');
+    url.searchParams.set('sheetName', tabName);
+
+    const res = await fetch(url.toString(), {
+      method: 'GET',
+      redirect: 'follow',
+    });
+
+    if (!res.ok) throw new Error(`GAS GET failed: ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.warn(`[GAS Fetch Warning] Error fetching sheet "${tabName}":`, err);
+    return { success: false, error: err.message, rows: [] };
+  }
 }

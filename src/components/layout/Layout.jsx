@@ -1,20 +1,31 @@
 import { Outlet } from 'react-router-dom';
-import BottomNav from './BottomNav.jsx';
+import Header from './Header.jsx';
+import FAB from './FAB.jsx';
+import AddEditModal from '../modals/AddEditModal.jsx';
 
 /**
- * Shared app shell: safe-area-aware wrapper + bottom navigation.
- * All page routes render inside <Outlet />.
+ * Shared App Shell
+ * - Persistent responsive Header
+ * - Scrollable main viewport with safe-area spacing
+ * - Fixed bottom-right Floating Action Button (FAB)
+ * - Global Add/Edit Expense Modal
  */
 export default function Layout() {
   return (
-    <div className="flex min-h-full flex-col">
-      {/* Scrollable page content */}
-      <main className="flex-1 overflow-y-auto px-4 pt-[var(--sat)] pb-20">
+    <div className="flex min-h-screen flex-col bg-slate-950 text-slate-100">
+      {/* Persistent Header */}
+      <Header />
+
+      {/* Main Content Area */}
+      <main className="flex-1 px-4 py-4 pb-24">
         <Outlet />
       </main>
 
-      {/* Fixed bottom navigation — thumb-friendly */}
-      <BottomNav />
+      {/* Floating Action Button */}
+      <FAB />
+
+      {/* Global Add / Edit Expense Modal */}
+      <AddEditModal />
     </div>
   );
 }
