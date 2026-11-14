@@ -54,8 +54,3 @@ pnpm-debug.log*
 .vercel
 .netlify
 .cache/
-
-# ──────────────────────────────────────────────
-# Google Apps Script (kept separate or in GAS IDE)
-# ──────────────────────────────────────────────
-gas/

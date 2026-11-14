@@ -23,6 +23,7 @@ export function formatRowForSheet(item) {
     bankAccount: item.bankAccount || 'SBI',
     amount: Number(item.amount) || 0,
     flow: item.flow || 'out', // 'in' or 'out' for P2P
+    person: item.person || '',
   };
 }
 
@@ -128,4 +129,47 @@ export async function fetchSheetExpenses(tabName) {
     console.warn(`[GAS Fetch Warning] Error fetching sheet "${tabName}":`, err);
     return { success: false, error: err.message, rows: [] };
   }
+}
+
+/**
+ * Fetch all monthly configurations from the "Config" sheet tab (doGet).
+ */
+export async function fetchAllConfigs() {
+  if (!GAS_URL || GAS_URL.includes('YOUR_DEPLOYMENT_ID')) {
+    return { success: true, offline: true, configs: {}, people: [] };
+  }
+
+  try {
+    const url = new URL(GAS_URL);
+    url.searchParams.set('action', 'getConfigs');
+
+    const res = await fetch(url.toString(), {
+      method: 'GET',
+      redirect: 'follow',
+    });
+
+    if (!res.ok) throw new Error(`GAS GET configs failed: ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.warn('[GAS Fetch Warning] Error fetching Config tab:', err);
+    return { success: false, error: err.message, configs: {}, people: [] };
+  }
+}
+
+/**
+ * Save or update a month's configuration in the "Config" sheet tab (doPost).
+ *
+ * @param {object} config - Month config object
+ */
+export async function saveMonthConfig(config) {
+  return postToGAS('saveConfig', { config });
+}
+
+/**
+ * Save the P2P people list inside the "Config" sheet tab (doPost).
+ *
+ * @param {string[]} people - List of person names
+ */
+export async function savePeopleConfig(people) {
+  return postToGAS('savePeople', { people });
 }

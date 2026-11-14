@@ -8,7 +8,7 @@ import { formatCurrency } from '../utils/helpers';
  * - Desktop: Full-width grid of counterparty cards, responsive filters, and quick ledger drawers.
  */
 export default function P2PDashboard() {
-  const { people, peopleMetrics, addPerson, setActivePersonLedger, openAddModal } = useApp();
+  const { people, peopleMetrics, addPerson, deletePerson, setActivePersonLedger, openAddModal } = useApp();
   const [newPersonName, setNewPersonName] = useState('');
   const [isAddingPerson, setIsAddingPerson] = useState(false);
 
@@ -28,14 +28,14 @@ export default function P2PDashboard() {
       <div className="flex-none flex items-center justify-between mb-2 md:mb-4 px-1">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-sm md:text-xl font-black tracking-tight text-white uppercase tracking-wider">
+            <h2 className="text-sm md:text-xl font-black tracking-tight text-slate-900 dark:text-white uppercase tracking-wider">
               P2P Counterparty Hub
             </h2>
-            <span className="hidden sm:inline-flex rounded-md bg-slate-900 px-2 py-0.5 text-xs text-slate-400 border border-slate-800">
+            <span className="hidden sm:inline-flex rounded-md bg-slate-100 dark:bg-slate-900 px-2 py-0.5 text-xs text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800">
               {people.length} counterparties
             </span>
           </div>
-          <p className="text-[10px] md:text-xs text-slate-400 mt-0.5">
+          <p className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Select a counterparty to view settlements, loans, and transfers
           </p>
         </div>
@@ -43,7 +43,7 @@ export default function P2PDashboard() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => openAddModal('p2p')}
-            className="hidden md:flex items-center gap-1.5 rounded-xl bg-sky-500 px-3 py-1.5 text-xs font-bold text-slate-950 shadow hover:bg-sky-400 active:scale-95 transition"
+            className="hidden md:flex items-center gap-1.5 rounded-xl bg-sky-500 px-3 py-1.5 text-xs font-bold text-white dark:text-slate-950 shadow hover:bg-sky-400 active:scale-95 transition"
           >
             <span>+</span>
             <span>New P2P Entry</span>
@@ -51,7 +51,7 @@ export default function P2PDashboard() {
 
           <button
             onClick={() => setIsAddingPerson(true)}
-            className="flex items-center gap-1 rounded-xl bg-sky-500/10 border border-sky-500/30 px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-bold text-sky-400 hover:bg-sky-500/20 active:scale-95 transition"
+            className="flex items-center gap-1 rounded-xl bg-sky-500/10 border border-sky-500/30 px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-bold text-sky-600 dark:text-sky-400 hover:bg-sky-500/20 active:scale-95 transition"
           >
             <span>+</span>
             <span>Add Person</span>
@@ -63,7 +63,7 @@ export default function P2PDashboard() {
       {isAddingPerson && (
         <form
           onSubmit={handleAddPerson}
-          className="flex-none mb-3 rounded-2xl border border-sky-500/30 bg-slate-900 p-3 sm:p-4 flex flex-wrap items-center gap-2.5 shadow-xl"
+          className="flex-none mb-3 rounded-2xl border border-sky-500/30 bg-white dark:bg-slate-900 p-3 sm:p-4 flex flex-wrap items-center gap-2.5 shadow-xl"
         >
           <input
             type="text"
@@ -72,18 +72,18 @@ export default function P2PDashboard() {
             placeholder="Enter counterparty name (e.g. Rahul, Sister, Amit)"
             value={newPersonName}
             onChange={(e) => setNewPersonName(e.target.value)}
-            className="flex-1 min-w-[200px] rounded-xl border border-slate-700 bg-slate-950 px-3.5 py-2 text-xs sm:text-sm text-white placeholder-slate-500 outline-none focus:border-sky-500"
+            className="flex-1 min-w-[200px] rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-3.5 py-2 text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:border-sky-500"
           />
           <button
             type="submit"
-            className="rounded-xl bg-sky-500 px-4 py-2 text-xs sm:text-sm font-bold text-slate-950 hover:bg-sky-400 transition"
+            className="rounded-xl bg-sky-500 px-4 py-2 text-xs sm:text-sm font-bold text-white dark:text-slate-950 hover:bg-sky-400 transition"
           >
             Add Person
           </button>
           <button
             type="button"
             onClick={() => setIsAddingPerson(false)}
-            className="rounded-xl border border-slate-700 px-3 py-2 text-xs sm:text-sm text-slate-400 hover:text-white"
+            className="rounded-xl border border-slate-300 dark:border-slate-700 px-3 py-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
           >
             Cancel
           </button>
@@ -111,35 +111,56 @@ export default function P2PDashboard() {
               role="button"
               tabIndex={0}
               onClick={() => setActivePersonLedger(personName)}
-              className="flex flex-col justify-between rounded-2xl border border-slate-800 bg-slate-900/90 p-3.5 md:p-5 shadow-md md:shadow-lg transition duration-200 hover:-translate-y-1 hover:border-sky-500/50 active:scale-[0.98] cursor-pointer"
+              className="flex flex-col justify-between rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 p-3.5 md:p-5 shadow-sm md:shadow-lg transition duration-200 hover:-translate-y-1 hover:border-sky-500/50 active:scale-[0.98] cursor-pointer"
             >
               {/* Person Name & Initials */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-sky-500/20 to-blue-500/20 border border-sky-500/30 text-xs sm:text-sm font-black text-sky-400">
+                  <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-sky-500/20 to-blue-500/20 border border-sky-500/30 text-xs sm:text-sm font-black text-sky-600 dark:text-sky-400">
                     {personName.charAt(0)}
                   </div>
                   <div>
-                    <h3 className="text-xs sm:text-sm font-bold text-white leading-tight">
+                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-tight">
                       {personName}
                     </h3>
-                    <span className="text-[10px] md:text-xs text-slate-400">
+                    <span className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400">
                       {metric.count} {metric.count === 1 ? 'record' : 'records'}
                     </span>
                   </div>
                 </div>
 
-                <span className="text-[10px] md:text-xs font-bold text-sky-400 flex items-center gap-1 group-hover:translate-x-0.5 transition">
-                  Ledger →
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (window.confirm(`Remove ${personName} from counterparties?`)) {
+                        deletePerson(personName);
+                      }
+                    }}
+                    title={`Remove ${personName}`}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                  <span className="text-[10px] md:text-xs font-bold text-sky-600 dark:text-sky-400 flex items-center gap-1 group-hover:translate-x-0.5 transition">
+                    Ledger →
+                  </span>
+                </div>
               </div>
 
               {/* Net Position Hero */}
               <div className="my-2.5 md:my-5">
-                <div className="text-[10px] md:text-xs text-slate-400 font-medium">Net Position</div>
+                <div className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  Net Position
+                </div>
                 <div
                   className={`text-lg sm:text-xl md:text-2xl font-black tracking-tight ${
-                    isNetPositive ? 'text-emerald-400' : 'text-rose-400'
+                    isNetPositive
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : 'text-rose-600 dark:text-rose-400'
                   }`}
                 >
                   {isNetPositive ? '+' : ''}
@@ -148,13 +169,13 @@ export default function P2PDashboard() {
               </div>
 
               {/* Breakdown Footnote */}
-              <div className="border-t border-slate-800/80 pt-2 flex items-center justify-between text-[10px] md:text-xs">
-                <div className="flex items-center gap-1 text-emerald-400 font-semibold">
+              <div className="border-t border-slate-200 dark:border-slate-800/80 pt-2 flex items-center justify-between text-[10px] md:text-xs">
+                <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
                   <span className="text-slate-500 font-normal">In:</span>
                   <span>+{formatCurrency(metric.inflow)}</span>
                 </div>
-                <span className="text-slate-600">|</span>
-                <div className="flex items-center gap-1 text-rose-400 font-semibold">
+                <span className="text-slate-300 dark:text-slate-600">|</span>
+                <div className="flex items-center gap-1 text-rose-600 dark:text-rose-400 font-semibold">
                   <span className="text-slate-500 font-normal">Out:</span>
                   <span>-{formatCurrency(metric.outflow)}</span>
                 </div>
@@ -167,7 +188,7 @@ export default function P2PDashboard() {
         {!isAddingPerson && (
           <button
             onClick={() => setIsAddingPerson(true)}
-            className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-800 bg-slate-950/40 p-4 min-h-[140px] text-slate-500 hover:border-sky-500/40 hover:text-sky-400 transition"
+            className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-950/40 p-4 min-h-[140px] text-slate-500 hover:border-sky-500/40 hover:text-sky-600 dark:hover:text-sky-400 transition"
           >
             <span className="text-2xl mb-1">+</span>
             <span className="text-xs sm:text-sm font-bold">Add Another Person</span>

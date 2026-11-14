@@ -1,17 +1,13 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 /*
  * Global base styles & CSS custom properties.
- * Tailwind v4 auto-detects content sources via @tailwindcss/vite.
  */
 
-/* ── Design tokens (extend in Tailwind v4 via @theme later) ── */
 :root {
-  --color-brand: #38bdf8;        /* sky-400 */
-  --color-surface: #0f172a;      /* slate-950 */
-  --color-surface-alt: #1e293b;  /* slate-800 */
-
-  /* Safe-area insets for notched devices */
+  --color-brand: #0284c7;        /* sky-600 */
   --sat: env(safe-area-inset-top);
   --sab: env(safe-area-inset-bottom);
   --sal: env(safe-area-inset-left);
@@ -27,4 +23,16 @@ html, body, #root {
 /* Smooth scrolling, respecting user preference */
 @media (prefers-reduced-motion: no-preference) {
   html { scroll-behavior: smooth; }
+}
+
+/* Hide number input spinner arrows across all browsers */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
