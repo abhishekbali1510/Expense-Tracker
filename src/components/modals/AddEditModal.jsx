@@ -117,9 +117,12 @@ export default function AddEditModal() {
       />
 
       {/* Modal Dialog */}
-      <div className="relative w-full max-w-md mx-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-2xl shadow-black/20 dark:shadow-black/80 max-h-[92vh] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        className="relative w-full max-w-md mx-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 sm:p-4 shadow-2xl shadow-black/20 dark:shadow-black/80 max-h-[95vh] overflow-y-auto no-scrollbar"
+      >
         {/* Header */}
-        <div className="mb-2.5 flex items-center justify-between">
+        <div className="mb-2 flex items-center justify-between">
           <div>
             <h2 className="text-base font-bold text-slate-900 dark:text-white">
               {isEditing ? 'Edit Expense Record' : 'Quick Expense Entry'}
@@ -128,13 +131,13 @@ export default function AddEditModal() {
           </div>
           <button
             onClick={closeModal}
-            className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+            className="flex h-7 w-7 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
           >
             ✕
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-2.5">
+        <form onSubmit={handleSubmit} className="space-y-2">
           {/* Amount (Hero Input) */}
           <div>
             <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
