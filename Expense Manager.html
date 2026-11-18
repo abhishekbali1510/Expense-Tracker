@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Expense Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#EEF1F6;--s:#fff;--s2:#F5F7FB;--ink:#0F1B2D;--mu:#5B6B82;--ln:#D9E0EA;--pri:#1E5BFF;--onpri:#fff;--bad:#D6336C;--e:#B7790A;--w:#7C3AED;--i:#0284C7;--sv:#059669;--sh:0 1px 2px rgba(15,27,45,.06),0 8px 24px -12px rgba(15,27,45,.18);color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0A0F1C;--s:#121A2B;--s2:#18223A;--ink:#EAF0FA;--mu:#8EA0BC;--ln:#22304A;--pri:#4C8DFF;--onpri:#06122B;--bad:#FF6B9A;--e:#F5B73B;--w:#A78BFA;--i:#38BDF8;--sv:#34D399;--sh:0 1px 0 rgba(255,255,255,.03) inset,0 10px 30px -14px rgba(0,0,0,.7);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0A0F1C;--s:#121A2B;--s2:#18223A;--ink:#EAF0FA;--mu:#8EA0BC;--ln:#22304A;--pri:#4C8DFF;--onpri:#06122B;--bad:#FF6B9A;--e:#F5B73B;--w:#A78BFA;--i:#38BDF8;--sv:#34D399;--sh:0 1px 0 rgba(255,255,255,.03) inset,0 10px 30px -14px rgba(0,0,0,.7);color-scheme:dark}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.45 Figtree,system-ui,sans-serif;min-height:100%;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:30}
+button,select,input{font:inherit;color:inherit}button{cursor:pointer;border:0;background:none}
+:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+.num,h1,h2,h3{font-family:'Bricolage Grotesque',Figtree,sans-serif;letter-spacing:-.02em}
+.wrap{max-width:1160px;margin:0 auto;padding:0 20px 110px}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--ln)}
+.hd{max-width:1160px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:12px}
+.logo{width:38px;height:38px;border-radius:12px;background:var(--pri);color:var(--onpri);display:grid;place-items:center;font:800 20px 'Bricolage Grotesque'}
+.brand b{display:block;font:700 17px 'Bricolage Grotesque';line-height:1.1}.brand small{color:var(--mu);font-size:12px}
+.sp{flex:1}.tabs{display:flex;background:var(--s);border:1px solid var(--ln);border-radius:12px;padding:3px;gap:2px}
+.tabs button{padding:7px 16px;border-radius:9px;color:var(--mu);font-weight:600}.tabs button[aria-selected=true]{background:var(--pri);color:var(--onpri)}
+.pill{border:1px solid var(--ln);background:var(--s);border-radius:12px;padding:8px 12px;font-weight:600;color:var(--ink);display:inline-flex;gap:6px;align-items:center}
+.btn{background:var(--pri);color:var(--onpri);border-radius:12px;padding:9px 16px;font-weight:600}
+.btn:active,.pill:active{transform:scale(.97)}
+.ghost{background:var(--s2);color:var(--ink);border:1px solid var(--ln)}
+section{margin-top:26px}h2{font-size:14px;margin:0 0 12px;color:var(--mu);font-weight:600;letter-spacing:0}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.card{background:var(--s);border:1px solid var(--ln);border-radius:20px;box-shadow:var(--sh);padding:18px}
+/* flow */
+.hero .big{font-size:clamp(34px,6vw,52px);font-weight:800;line-height:1}.hero p{margin:6px 0 18px;color:var(--mu)}
+.flow{display:flex;gap:4px;height:46px}.seg{position:relative;border-radius:10px;background:color-mix(in srgb,var(--c) 18%,var(--s2));overflow:hidden;cursor:pointer;transition:flex-grow .3s,opacity .2s;border:0;padding:0;min-width:10px}
+.seg i{position:absolute;inset:0 auto 0 0;background:var(--c);transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.flow.dim .seg:not(.on){opacity:.35}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:12px;font-size:13px;color:var(--mu)}.legend span:before{content:"";display:inline-block;width:9px;height:9px;border-radius:3px;background:var(--c);margin-right:6px}
+.tip{margin-top:14px;padding:12px 14px;border-radius:14px;background:var(--s2);min-height:48px;font-size:14px}
+/* banks */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.bank{position:relative;overflow:hidden}.bank .dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:8px;background:var(--c)}
+.bank .num{font-size:34px;font-weight:800;margin:6px 0 10px}.bank .cf{display:flex;justify-content:space-between;border-top:1px dashed var(--ln);padding-top:10px;color:var(--mu);font-size:13px}
+.bank .cf b{color:var(--sv)}
+/* budgets */
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.bud{--r:0;cursor:pointer;text-align:left;width:100%;transition:transform .2s,border-color .2s;position:relative}
+.bud:hover{transform:translateY(-3px);border-color:var(--c)}.bud[aria-expanded=true]{border-color:var(--c);box-shadow:0 0 0 1px var(--c),var(--sh)}
+.bud .top{display:flex;align-items:center;gap:12px}.ring{width:54px;height:54px;flex:none;position:relative}
+.ring svg{transform:rotate(-90deg)}.ring circle{fill:none;stroke-width:7;stroke-linecap:round}.ring .bg{stroke:color-mix(in srgb,var(--c) 18%,var(--s2))}
+.ring .fg{stroke:var(--c);transition:stroke-dashoffset .8s cubic-bezier(.2,.8,.2,1)}.ring em{position:absolute;inset:0;display:grid;place-items:center;font:700 12px 'Bricolage Grotesque';font-style:normal}
+.bud h3{margin:0;font-size:16px}.bud small{color:var(--mu)}.bud .rem{margin:12px 0 2px;font-size:28px;font-weight:800}
+.bud .lbl{color:var(--mu);font-size:12px}.chip{font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;background:color-mix(in srgb,var(--c) 16%,transparent);color:var(--c)}
+.over .rem{color:var(--bad)}
+.det{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s}.bud[aria-expanded=true] .det{grid-template-rows:1fr}.det>div{overflow:hidden}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);margin-top:12px;background:var(--s2);border-radius:14px;padding:10px;text-align:center;font-size:12px;color:var(--mu)}
+.stats b{display:block;color:var(--ink);font:700 14px 'Bricolage Grotesque'}.stats b.sp2{color:var(--e)}
+.quick{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}.quick span{font-size:12px;padding:5px 10px;border-radius:99px;border:1px solid var(--c);color:var(--c);font-weight:600}
+/* activity */
+.lay{display:grid;grid-template-columns:1.6fr 1fr;gap:14px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:6px}.chips button{white-space:nowrap;padding:6px 12px;border-radius:99px;border:1px solid var(--ln);background:var(--s);color:var(--mu);font-weight:600;font-size:13px}
+.chips button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tx{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--ln)}.tx:last-child{border:0}
+.ic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 16%,transparent);font-size:18px}
+.tx div.m{flex:1;min-width:0}.tx b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tx small{color:var(--mu)}
+.tx .amt{font:700 15px 'Bricolage Grotesque'}.x{color:var(--mu);padding:6px;border-radius:8px;opacity:.6}.x:hover{opacity:1;color:var(--bad)}
+.empty{padding:26px;text-align:center;color:var(--mu)}
+.ins{display:flex;flex-direction:column;gap:10px}.ins .it{padding:12px 14px;border-radius:14px;background:var(--s2);font-size:14px}.ins .it b{display:block;margin-bottom:2px}
+/* p2p */
+.p2p .tx .amt.g{color:var(--sv)}.p2p .tx .amt.r{color:var(--bad)}
+.hidden{display:none!important}
+/* dialog */
+dialog{border:0;padding:0;background:var(--s);color:var(--ink);border-radius:24px;width:min(440px,calc(100% - 24px));box-shadow:0 30px 80px -20px rgba(0,0,0,.5)}
+dialog::backdrop{background:rgba(5,10,20,.55);backdrop-filter:blur(3px)}
+dialog[open]{animation:up .25s cubic-bezier(.2,.8,.2,1)}@keyframes up{from{transform:translateY(24px);opacity:0}}
+.fm{padding:22px;display:flex;flex-direction:column;gap:14px}.fm h3{margin:0;font-size:20px}
+.amtin{display:flex;align-items:baseline;gap:6px;border-bottom:2px solid var(--ln);padding-bottom:6px}.amtin:focus-within{border-color:var(--pri)}
+.amtin span{font:700 30px 'Bricolage Grotesque';color:var(--mu)}.amtin input{border:0;background:none;font:800 38px 'Bricolage Grotesque';width:100%;outline:none}
+.opts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.opts.two{grid-template-columns:1fr 1fr}
+.opts button{padding:10px 4px;border-radius:12px;border:1.5px solid var(--ln);background:var(--s2);font-weight:600;font-size:13px}
+.opts button[aria-pressed=true]{border-color:var(--c,var(--pri));background:color-mix(in srgb,var(--c,var(--pri)) 14%,transparent);color:var(--c,var(--ink))}
+.fm label{font-size:12px;color:var(--mu);font-weight:600;margin-bottom:-8px}
+.txt{border:1px solid var(--ln);background:var(--s2);border-radius:12px;padding:11px 12px;width:100%;outline:none}.txt:focus{border-color:var(--pri)}
+.warn{color:var(--bad);font-size:13px;min-height:18px}
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;opacity:0;pointer-events:none;transition:.25s;z-index:60;max-width:90%}.toast.on{opacity:1;transform:translate(-50%,0)}
+/* mobile nav */
+nav.bn{display:none}
+@media (max-width:860px){
+ .tabs.d,.hd .btn span{display:none}.hd .btn{padding:9px 12px}
+ .g4{grid-template-columns:1fr 1fr}.lay{grid-template-columns:1fr}
+ nav.bn{display:flex;position:fixed;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:40;background:var(--s);border:1px solid var(--ln);border-radius:22px;box-shadow:var(--sh);padding:6px;justify-content:space-around;align-items:center}
+ nav.bn button{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;font-size:11px;font-weight:600;color:var(--mu);padding:6px 0;border-radius:14px}
+ nav.bn button[aria-selected=true]{color:var(--pri)}nav.bn .ico{font-size:19px}
+ nav.bn .fab{flex:none;width:52px;height:52px;border-radius:18px;background:var(--pri);color:var(--onpri);font-size:26px;margin-top:-22px;box-shadow:0 8px 20px -6px var(--pri);display:grid;place-items:center}
+ dialog{margin:auto auto 0;width:100%;border-radius:24px 24px 0 0;max-width:560px}
+}
+@media (max-width:520px){.g2{grid-template-columns:1fr}.bank .num{font-size:30px}.wrap,.hd{padding-left:14px;padding-right:14px}.bud .rem{font-size:23px}.stats{font-size:11px;padding:8px 4px}.base{display:none}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header><div class="hd">
+ <div class="logo">₹</div>
+ <div class="brand"><b>Expense Manager</b><small>Synced with your sheet</small></div>
+ <span class="pill base" title="Monthly base income">Base ₹1,42,900</span>
+ <div class="sp"></div>
+ <div class="tabs d" role="tablist"><button role="tab" data-t="home" aria-selected="true">Dashboard</button><button role="tab" data-t="p2p" aria-selected="false">P2P Hub</button></div>
+ <span class="pill" id="mo">Nov 2026 · 16 days left</span>
+ <button class="pill" id="th" aria-label="Switch theme">🌙</button>
+ <button class="btn" id="add1">+ <span>Add expense</span></button>
+</div></header>
+
+<main class="wrap">
+ <div id="home">
+  <section class="card hero">
+   <div class="row" style="align-items:flex-start;flex-wrap:wrap"><div><h2 style="margin-bottom:6px">Left to spend this month</h2><div class="big num" id="tot"></div></div><div style="text-align:right"><h2 style="margin-bottom:6px">Spent so far</h2><div class="num" id="tsp" style="font-size:24px;font-weight:700"></div></div></div>
+   <p id="sub"></p>
+   <div class="flow" id="flow" aria-label="Budget split"></div>
+   <div class="legend" id="leg"></div>
+   <div class="tip" id="tip">Tap a bar to see where that bucket stands.</div>
+  </section>
+
+  <section><div class="row"><h2>Bank accounts</h2><button class="pill" id="xf" style="padding:5px 12px;font-size:13px;color:var(--pri)">⇄ Self transfer</button></div><div class="g2" id="banks"></div></section>
+  <section><h2>Monthly budgets · tap a card for details</h2><div class="g4" id="buds"></div></section>
+
+  <section class="lay">
+   <div class="card"><div class="row"><h2 style="margin:0">Recent activity</h2></div><div class="chips" id="chips" style="margin-top:10px"></div><div id="txs"></div></div>
+   <div class="card"><h2>Insights</h2><div class="ins" id="ins"></div></div>
+  </section>
+ </div>
+
+ <div id="p2p" class="hidden">
+  <section class="card p2p"><div class="row"><h2 style="margin:0">Friends and splits</h2><span class="chip" style="--c:var(--pri)" id="net"></span></div><div id="pl" style="margin-top:8px"></div></section>
+ </div>
+</main>
+
+<nav class="bn"><button data-t="home" aria-selected="true"><span class="ico">🏠</span>Home</button><button data-t="act"><span class="ico">🧾</span>Activity</button><button class="fab" id="add2" aria-label="Add expense">+</button><button data-t="p2p"><span class="ico">🤝</span>P2P</button><button id="th2"><span class="ico">🌓</span>Theme</button></nav>
+
+<dialog id="dlg"><form class="fm" method="dialog" id="fx" onsubmit="return false">
+ <div class="row"><h3>Add expense</h3><button type="button" class="x" data-close aria-label="Close">✕</button></div>
+ <div class="amtin"><span>₹</span><input id="amt" inputmode="numeric" placeholder="0" autocomplete="off" aria-label="Amount"></div>
+ <label>Bucket</label><div class="opts" id="ob"></div>
+ <label>Paid from</label><div class="opts two" id="oba"></div>
+ <label>Note</label><input class="txt" id="note" placeholder="Groceries, rent, SIP…" maxlength="40">
+ <div class="warn" id="wr"></div>
+ <button class="btn" id="save" type="button">Save expense</button>
+</form></dialog>
+
+<dialog id="dx"><div class="fm">
+ <div class="row"><h3>Self transfer</h3><button type="button" class="x" data-close aria-label="Close">✕</button></div>
+ <div class="amtin"><span>₹</span><input id="xa" inputmode="numeric" placeholder="0" autocomplete="off" aria-label="Transfer amount"></div>
+ <label>Direction</label><div class="opts two" id="od"></div>
+ <div class="warn" id="xw"></div>
+ <button class="btn" id="xs" type="button">Move money</button>
+</div></dialog>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const fmt=n=>'₹'+Math.round(n).toLocaleString('en-IN');
+const S={banks:{hdfc:{n:'HDFC Bank',bal:71609,cf:6471,c:'#1E5BFF'},sbi:{n:'SBI Bank',bal:15233,cf:8972,c:'#0EA5E9'}},
+ b:[{k:'e',n:'Essentials',ic:'🏠',p:50,bud:71450,cf:3179,sp:61863},{k:'w',n:'Wants',ic:'✨',p:10,bud:14290,cf:26,sp:1609},{k:'i',n:'Invest',ic:'📈',p:10,bud:14290,cf:0,sp:8029},{k:'sv',n:'Savings',ic:'🛡️',p:30,bud:42870,cf:3292,sp:0}],
+ tx:[{id:1,b:'e',bank:'hdfc',a:2450,t:'BigBasket groceries',d:'Today'},{id:2,b:'i',bank:'hdfc',a:5000,t:'Nifty 50 SIP',d:'Today'},{id:3,b:'w',bank:'sbi',a:649,t:'Weekend dinner',d:'Yesterday'},{id:4,b:'e',bank:'hdfc',a:1180,t:'Electricity bill',d:'12 Nov'},{id:5,b:'e',bank:'sbi',a:960,t:'Metro card top-up',d:'11 Nov'},{id:6,b:'i',bank:'hdfc',a:3029,t:'Mutual fund top-up',d:'9 Nov'}],
+ p:[{n:'Aarav',t:'Trip to Lonavala',a:2400,in:true},{n:'Meera',t:'Dinner split',a:850,in:false},{n:'Rohan',t:'Cab share',a:320,in:true}],nid:7,sel:null,f:'all',DAY:14,DIM:30};
+const $=id=>document.getElementById(id),rem=b=>b.bud+b.cf-b.sp,col=k=>`var(--${k})`;
+const bk=k=>S.b.find(x=>x.k===k);let toastT;
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2200)}
+function ease(el,to){const from=+el.dataset.v||0;el.dataset.v=to;const t0=performance.now();(function f(t){const p=Math.min(1,(t-t0)/600),e=1-Math.pow(1-p,3);el.textContent=fmt(from+(to-from)*e);if(p<1)requestAnimationFrame(f)})(t0)}
+function render(){
+ const tr=S.b.reduce((a,b)=>a+Math.max(0,rem(b)),0),ts=S.b.reduce((a,b)=>a+b.sp,0),tb=S.b.reduce((a,b)=>a+b.bud+b.cf,0);
+ ease($('tot'),tr);$('tsp').textContent=fmt(ts);$('sub').textContent=`${Math.round(ts/tb*100)}% of your ${fmt(tb)} plan used · day ${S.DAY} of ${S.DIM}`;
+ $('flow').className='flow'+(S.sel?' dim':'');
+ $('flow').innerHTML=S.b.map(b=>`<button class="seg ${S.sel===b.k?'on':''}" style="--c:${col(b.k)};flex:${b.bud+b.cf} 1 0" data-k="${b.k}" aria-label="${b.n}"><i style="width:${Math.min(100,b.sp/(b.bud+b.cf)*100)}%"></i></button>`).join('');
+ $('leg').innerHTML=S.b.map(b=>`<span style="--c:${col(b.k)}">${b.n} ${b.p}%</span>`).join('');
+ const sb=bk(S.sel);$('tip').innerHTML=sb?`<b>${sb.ic} ${sb.n}</b> — ${fmt(sb.sp)} spent, ${fmt(Math.max(0,rem(sb)))} left of ${fmt(sb.bud+sb.cf)}.`:'Tap a bar to see where that bucket stands.';
+ $('banks').innerHTML=Object.values(S.banks).map(b=>`<div class="card bank" style="--c:${b.c}"><div class="row"><b><span class="dot"></span>${b.n}</b><small style="color:var(--pri);font-weight:600">Audit ↗</small></div><div class="lbl" style="color:var(--mu);margin-top:12px;font-size:13px">Available balance</div><div class="num">${fmt(b.bal)}</div><div class="cf"><span>Carried forward</span><b>${fmt(b.cf)}</b></div></div>`).join('');
+ $('buds').innerHTML=S.b.map(b=>{const t=b.bud+b.cf,u=t?b.sp/t:0,r=rem(b),C=2*Math.PI*21;
+  return `<div class="card bud ${r<0?'over':''}" role="button" tabindex="0" aria-expanded="${S.open===b.k}" data-o="${b.k}" style="--c:${col(b.k)}">
+  <div class="top"><div class="ring"><svg width="54" height="54" viewBox="0 0 54 54"><circle class="bg" cx="27" cy="27" r="21"/><circle class="fg" cx="27" cy="27" r="21" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-Math.min(1,u))}"/></svg><em>${Math.round(u*100)}%</em></div><div><h3>${b.ic} ${b.n}</h3><small>Target ${b.p}%</small></div></div>
+  <div class="rem num">${fmt(r)}</div><div class="lbl">Remaining balance</div>
+  <div class="det"><div><div class="stats"><span><b>${fmt(b.bud)}</b>Budget</span><span><b>${fmt(b.cf)}</b>Carry</span><span><b class="sp2">${fmt(b.sp)}</b>Spent</span></div>
+  <div class="quick"><span data-q="${b.k}">+ Add to ${b.n}</span></div></div></div></div>`}).join('');
+ $('chips').innerHTML=[['all','All']].concat(S.b.map(b=>[b.k,b.ic+' '+b.n])).map(([k,n])=>`<button data-f="${k}" aria-pressed="${S.f===k}">${n}</button>`).join('');
+ const l=S.tx.filter(t=>S.f==='all'||t.b===S.f);
+ $('txs').innerHTML=l.length?l.map(t=>{const b=bk(t.b);return `<div class="tx" style="--c:${col(t.b)}"><div class="ic">${b.ic}</div><div class="m"><b>${t.t}</b><small>${t.d} · ${S.banks[t.bank].n}</small></div><span class="amt">−${fmt(t.a)}</span><button class="x" data-del="${t.id}" aria-label="Delete ${t.t}">✕</button></div>`}).join(''):'<div class="empty">No expenses here yet. Tap + to add your first one.</div>';
+ const ins=[],e=bk('e'),perDay=e.sp/S.DAY,left=rem(e);
+ if(perDay>0&&left>0){const d=Math.floor(left/perDay),lastDay=S.DAY+d;ins.push(lastDay<S.DIM?[`⚠️ Essentials may run out ~${lastDay} Nov`,`At ${fmt(perDay)}/day you have about ${d} days of cover. ${S.DIM-S.DAY} days remain.`]:['✅ Essentials on track','Your daily pace fits the rest of the month.'])}
+ const sv=bk('sv');if(sv.sp===0)ins.push(['💡 Savings untouched',`${fmt(rem(sv))} is idle. Move part to a high-yield account or FD.`]);
+ const inv=bk('i');if(inv.sp/(inv.bud+inv.cf)>inv.p/100*2)ins.push(['📈 Investing above target',`You are at ${Math.round(inv.sp/(inv.bud+inv.cf)*100)}% of the Invest bucket versus a ${inv.p}% allocation.`]);
+ const wb=bk('w');ins.push(['✨ Wants has room',`${fmt(rem(wb))} left. A guilt-free treat fits.`]);
+ $('ins').innerHTML=ins.slice(0,4).map(i=>`<div class="it"><b>${i[0]}</b>${i[1]}</div>`).join('');
+ const net=S.p.reduce((a,p)=>a+(p.in?p.a:-p.a),0);$('net').textContent=(net>=0?'You get ':'You owe ')+fmt(Math.abs(net));$('net').style.setProperty('--c','var(--pri)');
+ $('pl').innerHTML=S.p.length?S.p.map((p,i)=>`<div class="tx"><div class="ic" style="--c:var(--pri)">${p.n[0]}</div><div class="m"><b>${p.n}</b><small>${p.t}</small></div><span class="amt ${p.in?'g':'r'}">${p.in?'+':'−'}${fmt(p.a)}</span><button class="pill" style="padding:4px 10px;font-size:12px" data-settle="${i}">Settle</button></div>`).join(''):'<div class="empty">All settled. Nobody owes anyone.</div>'}
+/* tabs */
+function tab(t){const h=t==='p2p';$('home').classList.toggle('hidden',h);$('p2p').classList.toggle('hidden',!h);
+ document.querySelectorAll('[data-t]').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===(t==='act'?'act':t)));
+ if(t==='act')document.querySelector('.lay').scrollIntoView({behavior:'smooth'});else scrollTo({top:0,behavior:'smooth'})}
+document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>tab(b.dataset.t));
+/* theme */
+let mode=null;function theme(){const dark=document.documentElement.dataset.theme?document.documentElement.dataset.theme==='dark':matchMedia('(prefers-color-scheme:dark)').matches;
+ document.documentElement.dataset.theme=dark?'light':'dark';$('th').textContent=dark?'🌙':'☀️'}
+$('th').onclick=theme;$('th2').onclick=theme;$('th').textContent=matchMedia('(prefers-color-scheme:dark)').matches?'☀️':'🌙';
+/* delegation */
+document.addEventListener('click',e=>{const g=s=>e.target.closest(s);let x;
+ if(x=g('[data-k]')){S.sel=S.sel===x.dataset.k?null:x.dataset.k;render()}
+ else if(x=g('[data-q]')){e.stopPropagation();openAdd(x.dataset.q)}
+ else if(x=g('[data-o]')){S.open=S.open===x.dataset.o?null:x.dataset.o;render()}
+ else if(x=g('[data-f]')){S.f=x.dataset.f;render()}
+ else if(x=g('[data-del]')){const i=S.tx.findIndex(t=>t.id==x.dataset.del),t=S.tx[i];bk(t.b).sp-=t.a;S.banks[t.bank].bal+=t.a;S.tx.splice(i,1);render();toast('Expense deleted · balances restored')}
+ else if(x=g('[data-settle]')){const p=S.p.splice(+x.dataset.settle,1)[0];render();toast(`Settled with ${p.n}`)}
+ else if(g('[data-close]'))e.target.closest('dialog').close()});
+document.addEventListener('keydown',e=>{const c=e.target.closest&&e.target.closest('[data-o]');if(c&&(e.key==='Enter'||e.key===' ')&&e.target===c){e.preventDefault();c.click()}});
+/* add expense */
+let fb='e',fk='hdfc';
+function opts(){$('ob').innerHTML=S.b.map(b=>`<button type="button" data-ob="${b.k}" style="--c:${col(b.k)}" aria-pressed="${fb===b.k}">${b.ic}<br>${b.n}</button>`).join('');
+ $('oba').innerHTML=Object.entries(S.banks).map(([k,b])=>`<button type="button" data-oa="${k}" aria-pressed="${fk===k}">${b.n}</button>`).join('');chk()}
+function chk(){const a=+$('amt').value.replace(/,/g,''),b=bk(fb);let m='';if(a>rem(b))m=`This goes ${fmt(a-rem(b))} over your ${b.n} budget.`;else if(a>S.banks[fk].bal)m=`${S.banks[fk].n} only has ${fmt(S.banks[fk].bal)}.`;$('wr').textContent=m}
+function openAdd(k){if(k)fb=k;$('amt').value='';$('note').value='';opts();$('dlg').showModal();setTimeout(()=>$('amt').focus(),50)}
+$('add1').onclick=()=>openAdd();$('add2').onclick=()=>openAdd();
+$('ob').onclick=e=>{const x=e.target.closest('[data-ob]');if(x){fb=x.dataset.ob;opts()}};
+$('oba').onclick=e=>{const x=e.target.closest('[data-oa]');if(x){fk=x.dataset.oa;opts()}};
+$('amt').oninput=()=>{const d=$('amt').value.replace(/\D/g,'');$('amt').value=d?(+d).toLocaleString('en-IN'):'';chk()};
+$('save').onclick=()=>{const a=+$('amt').value.replace(/,/g,'');if(!a){$('wr').textContent='Enter an amount to save.';$('amt').focus();return}
+ const b=bk(fb),over=a>rem(b);b.sp+=a;S.banks[fk].bal-=a;S.tx.unshift({id:S.nid++,b:fb,bank:fk,a,t:$('note').value.trim()||b.n+' expense',d:'Just now'});
+ $('dlg').close();render();toast(over?`Saved · ${b.n} is now over budget`:`Saved ${fmt(a)} to ${b.n}`)};
+/* self transfer */
+let dir='hs';
+function dopts(){$('od').innerHTML=`<button type="button" data-d="hs" aria-pressed="${dir==='hs'}">HDFC → SBI</button><button type="button" data-d="sh" aria-pressed="${dir==='sh'}">SBI → HDFC</button>`}
+$('xf').onclick=()=>{$('xa').value='';$('xw').textContent='';dopts();$('dx').showModal();setTimeout(()=>$('xa').focus(),50)};
+$('od').onclick=e=>{const x=e.target.closest('[data-d]');if(x){dir=x.dataset.d;dopts()}};
+$('xa').oninput=()=>{const d=$('xa').value.replace(/\D/g,'');$('xa').value=d?(+d).toLocaleString('en-IN'):''};
+$('xs').onclick=()=>{const a=+$('xa').value.replace(/,/g,''),f=S.banks[dir==='hs'?'hdfc':'sbi'],t=S.banks[dir==='hs'?'sbi':'hdfc'];
+ if(!a){$('xw').textContent='Enter an amount to move.';return}if(a>f.bal){$('xw').textContent=`${f.n} only has ${fmt(f.bal)}.`;return}
+ f.bal-=a;t.bal+=a;$('dx').close();render();toast(`Moved ${fmt(a)} to ${t.n}`)};
+document.querySelectorAll('dialog').forEach(d=>d.addEventListener('click',e=>{if(e.target===d)d.close()}));
+render();
+</script>
+</body>
+</html>

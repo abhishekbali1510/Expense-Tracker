@@ -70,7 +70,7 @@ export default function BankLedgerModal() {
   const prevCarry = Number(bankData.prevCarry) || 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center p-0 sm:p-4">
+    <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center sm:items-center p-0 sm:p-4">
       {/* Backdrop */}
       <div
         onClick={() => setActiveBankLedger(null)}
@@ -78,7 +78,7 @@ export default function BankLedgerModal() {
       />
 
       {/* Modal / Bottom Sheet */}
-      <div className="relative w-full sm:max-w-xl max-h-[88vh] rounded-t-3xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl flex flex-col overflow-hidden">
+      <div className="relative w-full sm:max-w-xl mx-auto max-h-[88vh] rounded-t-3xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex-none p-4 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-950/50">
           <div className="flex items-center justify-between">

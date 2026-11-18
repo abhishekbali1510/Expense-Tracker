@@ -148,7 +148,7 @@ export default function MonthConfigModal() {
       />
 
       {/* Modal Content */}
-      <div className="relative w-full max-w-md max-h-[90vh] rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl flex flex-col overflow-hidden text-slate-900 dark:text-white">
+      <div className="relative w-full max-w-md mx-auto max-h-[90vh] rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl flex flex-col overflow-hidden text-slate-900 dark:text-white">
         {/* Header */}
         <div className="flex-none p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 flex items-center justify-between">
           <div>

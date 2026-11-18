@@ -1,5 +1,5 @@
 const EXPENSE_HEADERS = [
-  'Row ID', 'Date', 'Section', 'Description', 'Bank Account', 'Amount', 'Flow', 'Person'
+  'Row ID', 'Date', 'Section', 'Description', 'Bank Account', 'Amount', 'Flow', 'Person', 'Budget Impact'
 ];
 
 const CONFIG_SHEET_NAME = 'Config';
@@ -197,7 +197,8 @@ function doPost(e) {
       const r = data.row;
       sheet.appendRow([
         r.rowId, "'" + String(r.date || ''), r.section, r.description,
-        r.bankAccount, Number(r.amount) || 0, r.flow || 'out', r.person || ''
+        r.bankAccount, Number(r.amount) || 0, r.flow || 'out', r.person || '',
+        r.budgetImpact || ''
       ]);
       return jsonResponse({ success: true, message: 'Row added' });
     }
@@ -210,7 +211,8 @@ function doPost(e) {
           sheet.getRange(i + 1, 2).setNumberFormat('@');
           sheet.getRange(i + 1, 1, 1, EXPENSE_HEADERS.length).setValues([[
             r.rowId, String(r.date || ''), r.section, r.description,
-            r.bankAccount, Number(r.amount) || 0, r.flow || 'out', r.person || ''
+            r.bankAccount, Number(r.amount) || 0, r.flow || 'out', r.person || '',
+            r.budgetImpact || ''
           ]]);
           return jsonResponse({ success: true, message: 'Row updated' });
         }
@@ -327,6 +329,37 @@ function doGet(e) {
       return jsonResponse({ success: true, configs, people });
     }
 
+    // ── Fetch All P2P Expenses Across All Month Tabs ──
+    if (action === 'getAllP2P') {
+      const sheets = ss.getSheets();
+      const rows = [];
+      for (let s = 0; s < sheets.length; s++) {
+        const sheet = sheets[s];
+        const sheetName = sheet.getName();
+        if (sheetName === CONFIG_SHEET_NAME) continue;
+        const data = sheet.getDataRange().getValues();
+        for (let i = 1; i < data.length; i++) {
+          const [id, date, section, description, bankAccount, amount, flow, person, budgetImpact] = data[i];
+          if (!id) continue;
+          if (String(section).toLowerCase() === 'p2p') {
+            rows.push({
+              id: String(id),
+              date: formatCellDate(date, ss),
+              section: 'p2p',
+              description: String(description),
+              bankAccount: String(bankAccount),
+              amount: Number(amount) || 0,
+              flow: flow || 'out',
+              person: person || '',
+              budgetImpact: budgetImpact ? String(budgetImpact).toLowerCase() : '',
+              month: sheetName
+            });
+          }
+        }
+      }
+      return jsonResponse({ success: true, rows });
+    }
+
     // ── Fetch Monthly Expenses ──
     if (action === 'getExpenses') {
       const sheetName = e.parameter.sheetName;
@@ -337,7 +370,7 @@ function doGet(e) {
       const data = sheet.getDataRange().getValues();
       const rows = [];
       for (let i = 1; i < data.length; i++) {
-        const [id, date, section, description, bankAccount, amount, flow, person] = data[i];
+        const [id, date, section, description, bankAccount, amount, flow, person, budgetImpact] = data[i];
         if (!id) continue;
         rows.push({
           id: String(id),
@@ -348,6 +381,7 @@ function doGet(e) {
           amount: Number(amount) || 0,
           flow: flow || 'out',
           person: person || '',
+          budgetImpact: budgetImpact ? String(budgetImpact).toLowerCase() : '',
           month: sheetName
         });
       }

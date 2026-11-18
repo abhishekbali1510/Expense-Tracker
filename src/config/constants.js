@@ -38,5 +38,6 @@ export const LS_KEYS = {
   ACTIVE_MONTH: 'et_active_month_v3',
   PEOPLE: 'et_people_v3',
   THEME: 'et_theme_v3',
+  P2P_SCOPE: 'et_p2p_scope_v3',
   GAS_URL_OVERRIDE: 'et_gas_url',
 };

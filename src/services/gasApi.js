@@ -24,6 +24,7 @@ export function formatRowForSheet(item) {
     amount: Number(item.amount) || 0,
     flow: item.flow || 'out', // 'in' or 'out' for P2P
     person: item.person || '',
+    budgetImpact: item.budgetImpact || '',
   };
 }
 
@@ -153,6 +154,31 @@ export async function fetchAllConfigs() {
   } catch (err) {
     console.warn('[GAS Fetch Warning] Error fetching Config tab:', err);
     return { success: false, error: err.message, configs: {}, people: [] };
+  }
+}
+
+/**
+ * Fetch all P2P transactions across all monthly sheet tabs (doGet).
+ */
+export async function fetchAllP2PExpenses() {
+  if (!GAS_URL || GAS_URL.includes('YOUR_DEPLOYMENT_ID')) {
+    return { success: true, offline: true, rows: [] };
+  }
+
+  try {
+    const url = new URL(GAS_URL);
+    url.searchParams.set('action', 'getAllP2P');
+
+    const res = await fetch(url.toString(), {
+      method: 'GET',
+      redirect: 'follow',
+    });
+
+    if (!res.ok) throw new Error(`GAS GET getAllP2P failed: ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.warn('[GAS Fetch Warning] Error fetching all P2P:', err);
+    return { success: false, error: err.message, rows: [] };
   }
 }
 

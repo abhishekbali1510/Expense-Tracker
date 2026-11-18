@@ -12,6 +12,7 @@ import {
   deleteExpenseFromSheet,
   fetchSheetExpenses,
   fetchAllConfigs,
+  fetchAllP2PExpenses,
   saveMonthConfig,
   savePeopleConfig,
 } from '../services/gasApi';
@@ -74,6 +75,15 @@ export function AppProvider({ children }) {
   const [activePersonLedger, setActivePersonLedger] = useState(null); // string (person name) or null
   const [activeBankLedger, setActiveBankLedger] = useState(null); // 'HDFC' | 'SBI' | null
 
+  // ── P2P Scope State ('overall' | 'month') - Defaults to 'overall' per user request ──
+  const [p2pScope, setP2pScope] = useState(() => {
+    return localStorage.getItem(LS_KEYS.P2P_SCOPE) || 'overall';
+  });
+
+  useEffect(() => {
+    localStorage.setItem(LS_KEYS.P2P_SCOPE, p2pScope);
+  }, [p2pScope]);
+
   // ── Sync & Loading Status ──
   const [syncStatus, setSyncStatus] = useState('idle'); // 'idle' | 'syncing' | 'synced' | 'error'
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -114,7 +124,10 @@ export function AppProvider({ children }) {
   useEffect(() => {
     let mounted = true;
     async function loadInitialConfigs() {
-      const res = await fetchAllConfigs();
+      const [res, p2pRes] = await Promise.all([
+        fetchAllConfigs(),
+        fetchAllP2PExpenses(),
+      ]);
       if (!mounted) return;
       if (res.success && !res.offline && res.configs) {
         const cleanConfigs = normalizeConfigsMap(res.configs);
@@ -131,6 +144,17 @@ export function AppProvider({ children }) {
           );
           setPeople(cleanPeople);
         }
+      }
+      if (p2pRes && p2pRes.success && Array.isArray(p2pRes.rows) && p2pRes.rows.length > 0) {
+        const normalizedP2P = p2pRes.rows.map((tx) => ({
+          ...tx,
+          date: formatDisplayDate(tx.date),
+        }));
+        setTransactions((prev) => {
+          const existingIds = new Set(prev.map((t) => t.id));
+          const newRows = normalizedP2P.filter((r) => !existingIds.has(r.id));
+          return [...newRows, ...prev];
+        });
       }
       setIsInitialLoading(false);
     }
@@ -153,9 +177,10 @@ export function AppProvider({ children }) {
       const startedAt = Date.now();
       if (!silent) setSyncStatus('syncing');
 
-      const [expRes, cfgRes] = await Promise.all([
+      const [expRes, cfgRes, p2pRes] = await Promise.all([
         fetchSheetExpenses(targetMonth),
         fetchAllConfigs(),
+        fetchAllP2PExpenses(),
       ]);
 
       // Avoid overwriting a newer local mutation with a stale in-flight GET
@@ -183,7 +208,16 @@ export function AppProvider({ children }) {
           const otherMonths = prev.filter(
             (tx) => tx.month && tx.month.toLowerCase() !== targetMonth.toLowerCase()
           );
-          return [...normalizedRows, ...otherMonths];
+          // If p2pRes has rows from other months, merge them as well
+          const allMerged = [...normalizedRows, ...otherMonths];
+          if (p2pRes && p2pRes.success && Array.isArray(p2pRes.rows)) {
+            const existingIds = new Set(allMerged.map((t) => t.id));
+            const newP2PRows = p2pRes.rows
+              .filter((r) => !existingIds.has(r.id))
+              .map((tx) => ({ ...tx, date: formatDisplayDate(tx.date) }));
+            return [...allMerged, ...newP2PRows];
+          }
+          return allMerged;
         });
         // Register any P2P people found in the sheet (strictly p2p section, excluding banks)
         const sheetPeople = expRes.rows
@@ -301,9 +335,30 @@ export function AppProvider({ children }) {
       const allocated = Math.round((base * percent) / 100);
       const prevCarry = prevCarries[key] ?? 0;
 
-      const secTransactions = currentMonthTransactions.filter(
-        (tx) => tx.section && tx.section.trim().toLowerCase() === key
-      );
+      const secTransactions = currentMonthTransactions.filter((tx) => {
+        const sec = (tx.section || '').trim().toLowerCase();
+        if (sec === key) return true;
+
+        // P2P ➔ Savings Integration (Option A):
+        // Only HDFC P2P transactions draw from / restore the Savings envelope.
+        // SBI transactions are for daily UPI and do not impact the Savings bucket.
+        if (key === 'savings' && sec === 'p2p') {
+          const bank = String(tx.bankAccount || '').trim().toUpperCase();
+          if (bank !== 'HDFC') return false;
+
+          // Explicitly opted out: pure bank cashflow, does not touch budget
+          if (tx.budgetImpact === 'none') return false;
+          // Explicitly marked for savings
+          if (tx.budgetImpact === 'savings') return true;
+          // Legacy / default: include non-opening balance HDFC P2P entries
+          const isOpeningBalance =
+            tx.description === 'Previous / Opening Balance' ||
+            bank === 'NONE';
+          return !isOpeningBalance;
+        }
+
+        return false;
+      });
 
       const spent = secTransactions.reduce((acc, curr) => {
         const amt = Number(curr.amount) || 0;
@@ -374,8 +429,10 @@ export function AppProvider({ children }) {
   }, [currentMonthData, currentMonthTransactions]);
 
   // ── Calculate People Metrics for P2P ──
+  // Respects p2pScope: 'overall' (all-time cross-month cumulative, default) or 'month' (active month only)
   const peopleMetrics = useMemo(() => {
-    const p2pTx = currentMonthTransactions.filter(
+    const sourceTx = p2pScope === 'overall' ? transactions : currentMonthTransactions;
+    const p2pTx = sourceTx.filter(
       (tx) => tx.section && tx.section.toLowerCase() === 'p2p'
     );
 
@@ -386,6 +443,9 @@ export function AppProvider({ children }) {
         (tx) => tx.person && tx.person.toLowerCase() === personName.toLowerCase()
       );
 
+      // Sort pTx descending (most recent first)
+      const sortedPTx = sortTransactionsDesc(pTx, activeMonth);
+
       const inflow = pTx
         .filter((tx) => tx.flow === 'in')
         .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
@@ -394,11 +454,18 @@ export function AppProvider({ children }) {
         .filter((tx) => tx.flow === 'out')
         .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
 
-      const net = inflow - outflow;
+      // In P2P lending (Splitwise convention):
+      // outflow = Money Given to the counterparty
+      // inflow = Money Received from the counterparty
+      // net = outflow - inflow:
+      // > 0 : They Owe You (Receivable / Green)
+      // < 0 : You Owe Them (Debt / Red)
+      // === 0 : Settled
+      const net = outflow - inflow;
 
       metrics[personName] = {
         name: personName,
-        transactions: pTx,
+        transactions: sortedPTx,
         inflow,
         outflow,
         net,
@@ -407,7 +474,7 @@ export function AppProvider({ children }) {
     });
 
     return metrics;
-  }, [people, currentMonthTransactions]);
+  }, [people, p2pScope, transactions, currentMonthTransactions, activeMonth]);
 
   // ── P2P Person Management (Syncs to Google Sheets "Config" Tab) ──
   const addPerson = useCallback(
@@ -587,7 +654,7 @@ export function AppProvider({ children }) {
       // Background synchronization to Google Sheets
       try {
         const res = await syncExpenseToSheet(
-          activeMonth,
+          savedRecord.month || activeMonth,
           savedRecord,
           isEdit ? 'edit' : 'add'
         );
@@ -681,8 +748,12 @@ export function AppProvider({ children }) {
 
       // Check if this transaction is part of a paired transfer
       let idsToDelete = [id];
+      let targetMonth = activeMonth;
       setTransactions((prev) => {
         const target = prev.find((item) => item.id === id);
+        if (target?.month) {
+          targetMonth = target.month;
+        }
         const pairId = target?.transferPairId;
         if (pairId) {
           const paired = prev.find((item) => item.transferPairId === pairId && item.id !== id);
@@ -695,7 +766,7 @@ export function AppProvider({ children }) {
       closeModal();
 
       try {
-        await Promise.all(idsToDelete.map((delId) => deleteExpenseFromSheet(activeMonth, delId)));
+        await Promise.all(idsToDelete.map((delId) => deleteExpenseFromSheet(targetMonth, delId)));
         setSyncStatus('synced');
         setTimeout(() => setSyncStatus('idle'), 3000);
       } catch (err) {
@@ -722,6 +793,8 @@ export function AppProvider({ children }) {
     transactions: currentMonthTransactions,
     sectionMetrics,
     peopleMetrics,
+    p2pScope,
+    setP2pScope,
     modalState,
     syncStatus,
     isInitialLoading,

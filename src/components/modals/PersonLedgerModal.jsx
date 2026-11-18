@@ -6,6 +6,9 @@ export default function PersonLedgerModal() {
     activePersonLedger,
     setActivePersonLedger,
     peopleMetrics,
+    p2pScope,
+    setP2pScope,
+    activeMonth,
     openAddModal,
     openEditModal,
   } = useApp();
@@ -20,10 +23,8 @@ export default function PersonLedgerModal() {
     net: 0,
   };
 
-  const isNetPositive = metric.net >= 0;
-
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center p-0 sm:p-4">
+    <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center sm:items-center p-0 sm:p-4">
       {/* Backdrop */}
       <div
         onClick={() => setActivePersonLedger(null)}
@@ -31,7 +32,7 @@ export default function PersonLedgerModal() {
       />
 
       {/* Modal / Bottom Sheet */}
-      <div className="relative w-full sm:max-w-lg max-h-[85vh] rounded-t-3xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl flex flex-col overflow-hidden">
+      <div className="relative w-full sm:max-w-xl mx-auto max-h-[85vh] rounded-t-3xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex-none p-4 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-950/50">
           <div className="flex items-center justify-between">
@@ -45,37 +46,71 @@ export default function PersonLedgerModal() {
               </div>
             </div>
 
-            <button
-              onClick={() => setActivePersonLedger(null)}
-              className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
-            >
-              ✕
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Scope Switcher Inside Modal */}
+              <div className="flex items-center rounded-xl bg-slate-200/80 dark:bg-slate-900 p-0.5 border border-slate-300 dark:border-slate-800 text-[10px] font-bold">
+                <button
+                  type="button"
+                  onClick={() => setP2pScope('overall')}
+                  className={`px-2 py-0.5 rounded-lg transition ${
+                    p2pScope === 'overall'
+                      ? 'bg-sky-500 text-slate-950 font-black shadow-sm'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  Overall
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setP2pScope('month')}
+                  className={`px-2 py-0.5 rounded-lg transition ${
+                    p2pScope === 'month'
+                      ? 'bg-sky-500 text-slate-950 font-black shadow-sm'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  {activeMonth || 'Month'}
+                </button>
+              </div>
+
+              <button
+                onClick={() => setActivePersonLedger(null)}
+                className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
           </div>
 
           {/* Metric Bar for this Person */}
           <div className="mt-3 grid grid-cols-3 divide-x divide-slate-200 dark:divide-slate-800 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/80 p-2 text-center">
             <div>
-              <div className="text-[10px] text-slate-500 dark:text-slate-400">Net Position</div>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold truncate">
+                {metric.net > 0 ? 'They Owe You' : metric.net < 0 ? 'You Owe Them' : 'Settled'}
+              </div>
               <div
-                className={`text-xs font-bold mt-0.5 ${
-                  isNetPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+                className={`text-xs sm:text-sm font-bold mt-0.5 ${
+                  metric.net > 0
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : metric.net < 0
+                    ? 'text-rose-600 dark:text-rose-400'
+                    : 'text-slate-500 dark:text-slate-400'
                 }`}
               >
-                {isNetPositive ? '+' : ''}
+                {metric.net > 0 ? '+' : ''}
                 {formatCurrency(metric.net)}
               </div>
             </div>
             <div>
-              <div className="text-[10px] text-slate-500 dark:text-slate-400">Received (In)</div>
-              <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
-                +{formatCurrency(metric.inflow)}
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Total Given</div>
+              <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white mt-0.5">
+                {formatCurrency(metric.outflow)}
               </div>
             </div>
             <div>
-              <div className="text-[10px] text-slate-500 dark:text-slate-400">Given (Out)</div>
-              <div className="text-xs font-bold text-rose-600 dark:text-rose-400 mt-0.5">
-                -{formatCurrency(metric.outflow)}
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Total Received</div>
+              <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white mt-0.5">
+                {formatCurrency(metric.inflow)}
               </div>
             </div>
           </div>
@@ -101,7 +136,9 @@ export default function PersonLedgerModal() {
         <div className="flex-1 overflow-y-auto divide-y divide-slate-200 dark:divide-slate-800/60 p-2">
           {metric.transactions.length === 0 ? (
             <div className="py-12 text-center text-xs text-slate-500">
-              No transactions recorded with {metric.name} for this month yet.
+              {p2pScope === 'overall'
+                ? `No transactions recorded with ${metric.name} yet.`
+                : `No transactions recorded with ${metric.name} for ${activeMonth || 'this month'} yet.`}
             </div>
           ) : (
             metric.transactions.map((tx) => {
@@ -123,12 +160,35 @@ export default function PersonLedgerModal() {
                     </div>
                     <div>
                       <div className="text-xs font-bold text-slate-900 dark:text-white">{tx.description}</div>
-                      <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 flex-wrap">
                         <span>{formatDisplayDate(tx.date)}</span>
+                        {p2pScope === 'overall' && tx.month && (
+                          <span className="rounded bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/30 px-1 py-0.2 text-[9px] font-bold">
+                            {tx.month}
+                          </span>
+                        )}
                         <span>•</span>
-                        <span className="rounded bg-slate-200 dark:bg-slate-800 px-1 py-0.2 font-medium text-slate-700 dark:text-slate-300">
-                          {tx.bankAccount}
+                        <span
+                          className={`rounded px-1.5 py-0.2 text-[9px] font-semibold ${
+                            String(tx.bankAccount || '').toUpperCase() === 'NONE' || !tx.bankAccount
+                              ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+                              : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                          }`}
+                        >
+                          {String(tx.bankAccount || '').toUpperCase() === 'NONE' || !tx.bankAccount
+                            ? 'None (Cash)'
+                            : tx.bankAccount}
                         </span>
+                        {tx.budgetImpact !== 'none' &&
+                          String(tx.bankAccount || '').toUpperCase() === 'HDFC' &&
+                          tx.description !== 'Previous / Opening Balance' && (
+                            <>
+                              <span>•</span>
+                              <span className="rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-1 py-0.2 text-[9px] font-semibold">
+                                Savings
+                              </span>
+                            </>
+                          )}
                       </div>
                     </div>
                   </div>

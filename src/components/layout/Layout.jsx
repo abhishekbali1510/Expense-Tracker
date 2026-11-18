@@ -26,10 +26,10 @@ export default function Layout() {
       <BottomNav />
 
       {/* 4. Global Modals */}
-      <AddEditModal />
       <MonthConfigModal />
       <PersonLedgerModal />
       <BankLedgerModal />
+      <AddEditModal />
     </div>
   );
 }

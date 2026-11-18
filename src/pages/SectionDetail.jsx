@@ -162,8 +162,15 @@ export default function SectionDetail() {
                   className="flex items-center justify-between gap-2.5 px-3.5 py-2.5 transition hover:bg-slate-50 dark:hover:bg-slate-800/40"
                 >
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-xs font-semibold text-slate-900 dark:text-white">
-                      {tx.description}
+                    <div className="flex items-center gap-1.5 truncate">
+                      <span className="truncate text-xs font-semibold text-slate-900 dark:text-white">
+                        {tx.description}
+                      </span>
+                      {tx.section?.toLowerCase() === 'p2p' && (
+                        <span className="shrink-0 rounded px-1.5 py-0.2 text-[9px] font-bold bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
+                          P2P • {tx.person}
+                        </span>
+                      )}
                     </div>
                     <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400">
                       <span>{formatDisplayDate(tx.date)}</span>
@@ -247,7 +254,14 @@ export default function SectionDetail() {
                       {formatDisplayDate(tx.date)}
                     </td>
                     <td className="px-5 py-3 text-xs text-slate-900 dark:text-white">
-                      {tx.description}
+                      <div className="flex items-center gap-2">
+                        <span>{tx.description}</span>
+                        {tx.section?.toLowerCase() === 'p2p' && (
+                          <span className="rounded px-1.5 py-0.2 text-[10px] font-bold bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
+                            P2P • {tx.person}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="whitespace-nowrap px-5 py-3 text-xs">
                       <span
