@@ -13,7 +13,7 @@ export default defineConfig({
       includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
         name: 'Expense Tracker',
-        short_name: 'Expenses',
+        short_name: 'Expense Tracker',
         description: 'Mobile-first personal expense tracker PWA',
         theme_color: '#0f172a',
         background_color: '#0f172a',
