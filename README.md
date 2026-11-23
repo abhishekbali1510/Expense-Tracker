@@ -2,6 +2,8 @@
 
 A **mobile-first Progressive Web App** for personal expense tracking, built with the **50/30/10/10 budgeting framework** and backed by **Google Sheets** as a human-readable database.
 
+> 📖 **Full AI Context & Architecture Reference**: For deep architectural details, financial accounting math, Google Apps Script API contracts, and domain rules, please read [APP_DOCUMENTATION.md](./APP_DOCUMENTATION.md).
+
 ## Tech Stack
 
 | Layer          | Technology                                  |
